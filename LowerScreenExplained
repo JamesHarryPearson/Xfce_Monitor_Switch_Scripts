@@ -1,0 +1,60 @@
+#!/bin/sh
+
+#This script works in xfce (only tested in Debian 10) and requires xdotool and wmctrl to be installed
+#This script assumes the following bindings for the tiling short cuts in xfce's window manager settings
+#ctrl+PageDown   = Toggle Maximise Vertically
+#ctrl+EqualsSign = Fullscreen
+#ctrl+'          = Tile to left half of screen
+#ctrl+#          = Tile to right half of screen
+#ctrl+PageUp     = Tile to top left of screen
+#ctrl+UpArrow    = Tile to top right of screen
+#ctrl+LeftArrow  = Tile to bottom left of screen
+#ctrl+DownArrow  = Tile to bottom right of screen
+
+#If you don't use tiling shortcuts in xfce, then delete lines 39 onwards, and the window will just move
+#to the middle of the other screen screen
+
+#If you do use tiling shortcuts, then you will have to change the sym links in lines 37,41,45,47,49,53,55,57
+#to match the bindings that you've set
+
+#This script assumes a 2560x1440 screen with a 1920x1080 screen arranged in the middle bellow it
+#This script will move a window to the lower screen
+#With windows that are tiled to the top half or bottom half of the screen, the script will make them full
+#screen as well as move them. I don't tile windows like this, so I've not fixed that.
+
+#For other screen resolution combinations and orientations, you will have to change some numbers
+#in lines 43,44,46,52,54
+#For 1080p Top and 1080p Bellow, change line 38 to include 0,480,1350,960,540 not 0,800,1710,960,540
+
+ unset x y w h
+ eval $(xwininfo -id $(xdotool getactivewindow) |
+   sed -n -e "s/^ \+Absolute upper-left X: \+\([0-9]\+\).*/x=\1/p" \
+          -e "s/^ \+Absolute upper-left Y: \+\([0-9]\+\).*/y=\1/p" \
+          -e "s/^ \+Width: \+\([0-9]\+\).*/w=\1/p" \
+          -e "s/^ \+Height: \+\([0-9]\+\).*/h=\1/p" )
+
+sleep .1
+xdotool key ctrl+Next
+wmctrl -r :ACTIVE: -e 0,800,1710,960,540
+
+if [ $w -gt 1920 ]; then
+	xdotool key ctrl+equal
+else
+	if [ $x -gt 800 ]; then
+		if [ $h -gt 1080 ]; then
+			xdotool key ctrl+numbersign
+		elif [ $y -gt 360 ]; then
+			xdotool key ctrl+Down
+		else
+			xdotool key ctrl+Up
+		fi
+	else
+		if [ $h -gt 1080 ]; then
+			xdotool key ctrl+apostrophe
+		elif [ $y -gt 360 ]; then
+			xdotool key ctrl+Left
+		else
+			xdotool key ctrl+Prior
+		fi
+	fi
+fi
